@@ -107,7 +107,7 @@ class Config(object):
         """
 
         ret = Config(vars(self))
-        
+
         for key, val in new_config_dict.items():
             ret.__setattr__(key, val)
 
@@ -123,7 +123,7 @@ class Config(object):
 
         for key, val in new_config_dict.items():
             self.__setattr__(key, val)
-    
+
     def print(self):
         for k, v in vars(self).items():
             print(k, ' = ', v)
@@ -143,7 +143,7 @@ dataset_base = Config({
 
     # Calibration image folder for TensorRT INT8 conversion.
     'calib_images': './data/coco/calib_images/',
-    
+
     # Validation images and annotations.
     'valid_images': './data/coco/images/',
     'valid_info':   'path_to_annotation_file',
@@ -171,7 +171,7 @@ dataset_base = Config({
 
 coco2014_dataset = dataset_base.copy({
     'name': 'COCO 2014',
-    
+
     'train_info': './data/coco/annotations/instances_train2014.json',
     'valid_info': './data/coco/annotations/instances_val2014.json',
 
@@ -180,7 +180,7 @@ coco2014_dataset = dataset_base.copy({
 
 coco2017_dataset = dataset_base.copy({
     'name': 'COCO 2017',
-    
+
     'train_info': './data/coco/annotations/instances_train2017.json',
     'valid_info': './data/coco/annotations/instances_val2017.json',
 
@@ -379,7 +379,7 @@ mobilenetv2_backbone = backbone_base.copy({
     'transform': mobilenetv2_transform,
 
     'selected_layers': [3, 4, 6],
-    
+
     'pred_aspect_ratios': [ [[1, 1/2, 2]] ]*5,
     'pred_scales': [[24], [48], [96], [192], [384]],
 
@@ -614,7 +614,7 @@ coco_base_config = Config({
     'use_focal_loss': False,
     'focal_loss_alpha': 0.25,
     'focal_loss_gamma': 2,
-    
+
     # The initial bias toward forground objects, as specified in the focal loss paper
     'focal_loss_init_pi': 0.01,
 
@@ -667,7 +667,7 @@ coco_base_config = Config({
     # Input image size. If preserve_aspect_ratio is False, min_size is ignored.
     'min_size': 200,
     'max_size': 300,
-    
+
     # Whether or not to do post processing on the cpu at test time
     'force_cpu_nms': True,
 
@@ -697,7 +697,7 @@ coco_base_config = Config({
 
     # Whether or not to use the predicted coordinate scheme from Yolo v2
     'use_yolo_regressors': False,
-    
+
     # For training, bboxes are considered "positive" if their anchors have a 0.5 IoU overlap
     # or greater with a ground truth box. If this is true, instead of using the anchor boxes
     # for this IoU computation, the matching function will use the predicted bbox coordinates.
@@ -730,14 +730,14 @@ yolact_base_config = coco_base_config.copy({
 
     # Image Size
     'max_size': 550,
-    
+
     # Training params
     'lr_schedule': 'step',
     'lr_steps': (280000, 600000, 700000, 750000),
     'max_iter': 800000,
 
     'flow': flow_base,
-    
+
     # Backbone Settings
     'backbone': resnet101_backbone.copy({
         'selected_layers': list(range(1, 4)),
@@ -789,14 +789,42 @@ yolact_base_config = coco_base_config.copy({
     'use_tensorrt_safe_mode': False,
 })
 
+def get_class_labels(file_path: str):
+    with open(file_path) as f:
+        lines = []
+        for line in f:
+            if "__" not in line:
+                lines.append(line.rstrip())
+    return tuple(lines)
+
+CUSTOM_LABEL_MAP = YOUTUBE_VIS_LABEL_MAP.copy()
+CUSTOM_LABEL_MAP[0] = 0
+
+my_custom_dataset = dataset_base.copy(
+    {
+        "name": "my_custom_dataset",
+        "train_images": "../datasets/COCO_datasets/train/",
+        "train_info": "../datasets/COCO_datasets/train/annotations.json",
+        "valid_images": "../datasets/COCO_datasets/val/",
+        "valid_info": "../datasets/COCO_datasets/val/annotations.json",
+        "has_gt": False,
+        "class_names": get_class_labels("../datasets/COCO_datasets/labels.txt"),
+        "use_all_frames": True,
+        "label_map": CUSTOM_LABEL_MAP,
+    }
+)
+
 yolact_edge_config = yolact_base_config.copy({
     'name': 'yolact_edge',
+    'dataset': my_custom_dataset,
     'torch2trt_max_calibration_images': 100,
     'torch2trt_backbone_int8': True,
     'torch2trt_protonet_int8': True,
     'torch2trt_fpn': True,
     'torch2trt_prediction_module': True,
 })
+
+
 
 yolact_edge_mobilenetv2_config = yolact_edge_config.copy({
     'name': 'yolact_edge_mobilenetv2',
@@ -953,4 +981,4 @@ def set_cfg(config_name:str):
 def set_dataset(dataset_name:str):
     """ Sets the dataset of the current config. """
     cfg.dataset = eval(dataset_name)
-    
+
