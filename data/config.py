@@ -598,7 +598,7 @@ coco_base_config = Config({
 
     # If using batchnorm anywhere in the backbone, freeze the batchnorm layer during training.
     # Note: any additional batch norm layers after the backbone will not be frozen.
-    'freeze_bn': False,
+    'freeze_bn': True,
 
     # Set this to a config object if you want an FPN (inherit from fpn_base). See fpn_base for details.
     'fpn': None,
@@ -797,8 +797,12 @@ def get_class_labels(file_path: str):
                 lines.append(line.rstrip())
     return tuple(lines)
 
-CUSTOM_LABEL_MAP = YOUTUBE_VIS_LABEL_MAP.copy()
-CUSTOM_LABEL_MAP[0] = 0
+# CUSTOM_LABEL_MAP = YOUTUBE_VIS_LABEL_MAP.copy()
+# CUSTOM_LABEL_MAP[0] = 0
+CUSTOM_LABEL_MAP = {1:  1,  2:  2,  3:  3,  4:  4,  5:  5,  6:  6,  7:  7,
+                    8:  8,  9:  9, 10: 10, 11: 11, 12: 12, 13: 13, 14: 14,
+                    15: 15, 16: 16}
+
 
 my_custom_dataset = dataset_base.copy(
     {
@@ -808,7 +812,7 @@ my_custom_dataset = dataset_base.copy(
         "valid_images": "../datasets/COCO_datasets/val/",
         "valid_info": "../datasets/COCO_datasets/val/annotations.json",
         "has_gt": False,
-        "class_names": get_class_labels("../datasets/COCO_datasets/labels.txt"),
+        "class_names": get_class_labels("../datasets/COCO_datasets/yolact_edge_labels.txt"),
         "use_all_frames": True,
         "label_map": CUSTOM_LABEL_MAP,
     }
